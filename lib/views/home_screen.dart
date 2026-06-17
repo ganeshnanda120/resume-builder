@@ -87,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 padding: const EdgeInsets.all(6),
@@ -101,12 +102,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                'Hero Resume',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: theme.colorScheme.onSurface,
+              Flexible(
+                child: Text(
+                  'Hero Resume',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -121,93 +125,122 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             const SizedBox(width: 4),
-            // Reset Button
-            MediaQuery.of(context).size.width < 600
-                ? IconButton(
-                    icon: const Icon(Icons.refresh),
-                    tooltip: 'Reset',
-                    onPressed: _showResetConfirm,
-                    style: IconButton.styleFrom(
-                      foregroundColor: theme.colorScheme.error,
+            // Actions on Mobile vs Desktop
+            if (MediaQuery.of(context).size.width < 600) ...[
+              // Download Button (compact on mobile)
+              _isDownloading
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12.0),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      ),
+                    )
+                  : IconButton(
+                      onPressed: _handleDownload,
+                      icon: const Icon(Icons.download),
+                      tooltip: 'Download PDF',
+                      style: IconButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
-                  )
-                : TextButton.icon(
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('Reset'),
-                    onPressed: _showResetConfirm,
-                    style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.error,
+              const SizedBox(width: 4),
+              // Secondary actions inside PopupMenu
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                tooltip: 'More Actions',
+                onSelected: (value) {
+                  if (value == 'reset') {
+                    _showResetConfirm();
+                  } else if (value == 'sample') {
+                    resumeProvider.loadSampleData();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Sample data loaded successfully!')),
+                    );
+                  }
+                },
+                itemBuilder: (BuildContext context) => [
+                  PopupMenuItem<String>(
+                    value: 'sample',
+                    child: Row(
+                      children: [
+                        Icon(Icons.auto_awesome, color: theme.colorScheme.primary, size: 20),
+                        const SizedBox(width: 8),
+                        const Text('Sample Data'),
+                      ],
                     ),
                   ),
-            const SizedBox(width: 4),
-            // Sample Data Button
-            MediaQuery.of(context).size.width < 600
-                ? IconButton(
-                    icon: const Icon(Icons.auto_awesome),
-                    tooltip: 'Sample Data',
-                    onPressed: () {
-                      resumeProvider.loadSampleData();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sample data loaded successfully!')),
-                      );
-                    },
-                    style: IconButton.styleFrom(
-                      foregroundColor: theme.colorScheme.primary,
-                    ),
-                  )
-                : TextButton.icon(
-                    icon: const Icon(Icons.auto_awesome, size: 18),
-                    label: const Text('Sample Data'),
-                    onPressed: () {
-                      resumeProvider.loadSampleData();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sample data loaded successfully!')),
-                      );
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.primary,
+                  PopupMenuItem<String>(
+                    value: 'reset',
+                    child: Row(
+                      children: [
+                        Icon(Icons.refresh, color: theme.colorScheme.error, size: 20),
+                        const SizedBox(width: 8),
+                        Text('Reset', style: TextStyle(color: theme.colorScheme.error)),
+                      ],
                     ),
                   ),
-            const SizedBox(width: 4),
-            // Download Button
-            _isDownloading
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2.5),
-                    ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: MediaQuery.of(context).size.width < 600
-                        ? IconButton(
-                            onPressed: _handleDownload,
-                            icon: const Icon(Icons.download),
-                            tooltip: 'Download PDF',
-                            style: IconButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          )
-                        : ElevatedButton.icon(
-                            onPressed: _handleDownload,
-                            icon: const Icon(Icons.download, size: 18),
-                            label: const Text('Download PDF'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
+                ],
+              ),
+              const SizedBox(width: 8),
+            ] else ...[
+              // Reset Button (desktop/tablet)
+              TextButton.icon(
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Reset'),
+                onPressed: _showResetConfirm,
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.error,
+                ),
+              ),
+              const SizedBox(width: 4),
+              // Sample Data Button (desktop/tablet)
+              TextButton.icon(
+                icon: const Icon(Icons.auto_awesome, size: 18),
+                label: const Text('Sample Data'),
+                onPressed: () {
+                  resumeProvider.loadSampleData();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Sample data loaded successfully!')),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Download Button (desktop/tablet)
+              _isDownloading
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: ElevatedButton.icon(
+                        onPressed: _handleDownload,
+                        icon: const Icon(Icons.download, size: 18),
+                        label: const Text('Download PDF'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                  ),
+                        ),
+                      ),
+                    ),
+            ],
           ],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(1.0),
