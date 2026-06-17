@@ -126,6 +126,7 @@ class _PersonalInfoSectionState extends State<PersonalInfoSection> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final personalInfo = resumeProvider.resumeData.personalInfo;
+    final bool isMobile = MediaQuery.of(context).size.width < 600;
 
     return Card(
       child: ExpansionTile(
@@ -178,7 +179,7 @@ class _PersonalInfoSectionState extends State<PersonalInfoSection> {
                             backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
                               final isDark = theme.brightness == Brightness.dark;
                               if (states.contains(WidgetState.hovered)) {
-                                return theme.colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.08);
+                                  return theme.colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.08);
                               }
                               if (states.contains(WidgetState.pressed)) {
                                 return theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.15);
@@ -207,21 +208,37 @@ class _PersonalInfoSectionState extends State<PersonalInfoSection> {
                 const SizedBox(height: 12),
                 _buildTextField(_titleController, 'Professional Title', 'e.g. Lead Flutter Developer', (val) => resumeProvider.updatePersonalInfo(title: val)),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField(_emailController, 'Email Address', 'e.g. alex@example.com', (val) => resumeProvider.updatePersonalInfo(email: val), 1, TextInputType.emailAddress)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildTextField(_phoneController, 'Phone Number', 'e.g. +1 (555) 019-2834', (val) => resumeProvider.updatePersonalInfo(phone: val), 1, TextInputType.phone)),
-                  ],
-                ),
+                isMobile
+                    ? Column(
+                        children: [
+                          _buildTextField(_emailController, 'Email Address', 'e.g. alex@example.com', (val) => resumeProvider.updatePersonalInfo(email: val), 1, TextInputType.emailAddress),
+                          const SizedBox(height: 12),
+                          _buildTextField(_phoneController, 'Phone Number', 'e.g. +1 (555) 019-2834', (val) => resumeProvider.updatePersonalInfo(phone: val), 1, TextInputType.phone),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(child: _buildTextField(_emailController, 'Email Address', 'e.g. alex@example.com', (val) => resumeProvider.updatePersonalInfo(email: val), 1, TextInputType.emailAddress)),
+                          const SizedBox(width: 12),
+                          Expanded(child: _buildTextField(_phoneController, 'Phone Number', 'e.g. +1 (555) 019-2834', (val) => resumeProvider.updatePersonalInfo(phone: val), 1, TextInputType.phone)),
+                        ],
+                      ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField(_locationController, 'Location', 'e.g. San Francisco, CA', (val) => resumeProvider.updatePersonalInfo(location: val))),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildTextField(_websiteController, 'Website / Portfolio', 'e.g. https://alexm.dev', (val) => resumeProvider.updatePersonalInfo(website: val), 1, TextInputType.url)),
-                  ],
-                ),
+                isMobile
+                    ? Column(
+                        children: [
+                          _buildTextField(_locationController, 'Location', 'e.g. San Francisco, CA', (val) => resumeProvider.updatePersonalInfo(location: val)),
+                          const SizedBox(height: 12),
+                          _buildTextField(_websiteController, 'Website / Portfolio', 'e.g. https://alexm.dev', (val) => resumeProvider.updatePersonalInfo(website: val), 1, TextInputType.url),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(child: _buildTextField(_locationController, 'Location', 'e.g. San Francisco, CA', (val) => resumeProvider.updatePersonalInfo(location: val))),
+                          const SizedBox(width: 12),
+                          Expanded(child: _buildTextField(_websiteController, 'Website / Portfolio', 'e.g. https://alexm.dev', (val) => resumeProvider.updatePersonalInfo(website: val), 1, TextInputType.url)),
+                        ],
+                      ),
                 const SizedBox(height: 12),
                 _buildTextField(_summaryController, 'Professional Summary', 'Write a short intro summarizing your strengths...', (val) => resumeProvider.updatePersonalInfo(summary: val), 4),
               ],
@@ -262,17 +279,27 @@ class WorkExperienceSection extends StatelessWidget {
                   const SizedBox(height: 12),
                   _buildTextField(positionController, 'Job Position', 'e.g. Software Engineer'),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(child: _buildTextField(startController, 'Start Date', 'e.g. Jan 2023')),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: isCurrent
-                            ? const SizedBox()
-                            : _buildTextField(endController, 'End Date', 'e.g. Present'),
-                      ),
-                    ],
-                  ),
+                  MediaQuery.of(context).size.width < 600
+                      ? Column(
+                          children: [
+                            _buildTextField(startController, 'Start Date', 'e.g. Jan 2023'),
+                            if (!isCurrent) ...[
+                              const SizedBox(height: 12),
+                              _buildTextField(endController, 'End Date', 'e.g. Present'),
+                            ],
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(child: _buildTextField(startController, 'Start Date', 'e.g. Jan 2023')),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: isCurrent
+                                  ? const SizedBox()
+                                  : _buildTextField(endController, 'End Date', 'e.g. Present'),
+                            ),
+                          ],
+                        ),
                   const SizedBox(height: 12),
                   CheckboxListTile(
                     title: const Text('I currently work here'),
@@ -423,13 +450,21 @@ class EducationSection extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildTextField(fieldController, 'Field of Study', 'e.g. Computer Science'),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField(startController, 'Start Date', 'e.g. Sep 2018')),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildTextField(endController, 'End Date', 'e.g. Jun 2020')),
-                  ],
-                ),
+                MediaQuery.of(context).size.width < 600
+                    ? Column(
+                        children: [
+                          _buildTextField(startController, 'Start Date', 'e.g. Sep 2018'),
+                          const SizedBox(height: 12),
+                          _buildTextField(endController, 'End Date', 'e.g. Jun 2020'),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(child: _buildTextField(startController, 'Start Date', 'e.g. Sep 2018')),
+                          const SizedBox(width: 12),
+                          Expanded(child: _buildTextField(endController, 'End Date', 'e.g. Jun 2020')),
+                        ],
+                      ),
                 const SizedBox(height: 12),
                 _buildTextField(descController, 'GPA / Description / Honors', 'Honors, GPA, specializations...', null, 3),
               ],
