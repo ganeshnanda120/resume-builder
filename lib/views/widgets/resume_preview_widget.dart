@@ -347,23 +347,40 @@ class ResumePreviewWidget extends StatelessWidget {
 
   Widget _buildSkillsItem(BuildContext context, Skill skill) {
     final theme = Theme.of(context);
+    final hasCategory = skill.category.isNotEmpty;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 6.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 130,
-            child: Text(
-              '${skill.category}:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: theme.colorScheme.primary),
+          if (hasCategory) ...[
+            SizedBox(
+              width: 130,
+              child: Text(
+                '${skill.category}:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: theme.colorScheme.primary),
+              ),
             ),
-          ),
+          ],
           Expanded(
-            child: Text(
-              skill.skills.join(', '),
-              style: const TextStyle(fontSize: 12, color: Color(0xFF2D3748)),
-            ),
+            child: skill.isColumn
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: skill.skills.map((s) => Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('• ', style: TextStyle(fontSize: 12, color: Color(0xFF2D3748))),
+                        Expanded(
+                          child: Text(s, style: const TextStyle(fontSize: 12, color: Color(0xFF2D3748))),
+                        ),
+                      ],
+                    )).toList(),
+                  )
+                : Text(
+                    skill.skills.join(', '),
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF2D3748)),
+                  ),
           ),
         ],
       ),

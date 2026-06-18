@@ -197,19 +197,23 @@ class Project {
 class Skill {
   final String category;
   final List<String> skills;
+  final bool isColumn;
 
   Skill({
     required this.category,
     required this.skills,
+    this.isColumn = false,
   });
 
   Skill copyWith({
     String? category,
     List<String>? skills,
+    bool? isColumn,
   }) {
     return Skill(
       category: category ?? this.category,
       skills: skills ?? this.skills,
+      isColumn: isColumn ?? this.isColumn,
     );
   }
 
@@ -217,6 +221,7 @@ class Skill {
     return Skill(
       category: '',
       skills: [],
+      isColumn: false,
     );
   }
 }

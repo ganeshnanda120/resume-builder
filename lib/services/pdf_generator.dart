@@ -101,6 +101,9 @@ class PdfGenerator {
           ];
         },
         footer: (pw.Context context) {
+          if (context.pagesCount <= 1) {
+            return pw.SizedBox();
+          }
           return pw.Container(
             alignment: pw.Alignment.centerRight,
             margin: const pw.EdgeInsets.only(top: 20),
@@ -109,12 +112,8 @@ class PdfGenerator {
               border: pw.Border(top: pw.BorderSide(color: PdfColors.grey300, width: 0.5)),
             ),
             child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: pw.MainAxisAlignment.end,
               children: [
-                pw.Text(
-                  'Generated via Digital Heroes Resume Builder',
-                  style: pw.TextStyle(color: greyColor, fontSize: 8),
-                ),
                 pw.Text(
                   'Page ${context.pageNumber} of ${context.pagesCount}',
                   style: pw.TextStyle(color: greyColor, fontSize: 8),
@@ -341,18 +340,33 @@ class PdfGenerator {
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.SizedBox(
-                width: 120,
-                child: pw.Text(
-                  '${skill.category}:',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9, color: primaryColor),
+              if (skill.category.isNotEmpty) ...[
+                pw.SizedBox(
+                  width: 120,
+                  child: pw.Text(
+                    '${skill.category}:',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9, color: primaryColor),
+                  ),
                 ),
-              ),
+              ],
               pw.Expanded(
-                child: pw.Text(
-                  skill.skills.join(', '),
-                  style: pw.TextStyle(color: darkColor, fontSize: 9),
-                ),
+                child: skill.isColumn
+                    ? pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: skill.skills.map((s) => pw.Row(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text('• ', style: pw.TextStyle(color: darkColor, fontSize: 9)),
+                            pw.Expanded(
+                              child: pw.Text(s, style: pw.TextStyle(color: darkColor, fontSize: 9)),
+                            ),
+                          ],
+                        )).toList(),
+                      )
+                    : pw.Text(
+                        skill.skills.join(', '),
+                        style: pw.TextStyle(color: darkColor, fontSize: 9),
+                      ),
               ),
             ],
           ),

@@ -19,25 +19,25 @@ class _FormSectionsWidgetState extends State<FormSectionsWidget> {
       builder: (context, _) {
         return ListView(
           padding: const EdgeInsets.all(16.0),
-          children: const [
-            PersonalInfoSection(),
-            SizedBox(height: 12),
+          children: [
+            const PersonalInfoSection(),
+            const SizedBox(height: 12),
             WorkExperienceSection(),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             EducationSection(),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             ProjectsSection(),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             SkillsSection(),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             CertificationsSection(),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             LanguagesSection(),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             AchievementsSection(),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             SocialLinksSection(),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
           ],
         );
       },
@@ -706,51 +706,80 @@ class SkillsSection extends StatelessWidget {
 
   void _showSkillDialog(BuildContext context, {int? index, Skill? existingSkill}) {
     final catController = TextEditingController(text: existingSkill?.category ?? '');
-    final skillsController = TextEditingController(text: existingSkill?.skills.join(', ') ?? '');
+    final skillsController = TextEditingController(text: existingSkill?.skills.join(existingSkill.isColumn ? '\n' : ', ') ?? '');
+    bool isColumn = existingSkill?.isColumn ?? false;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(index == null ? 'Add Skills Category' : 'Edit Skills Category'),
-        content: SingleChildScrollView(
-          child: SizedBox(
-            width: 450,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildTextField(catController, 'Category Name', 'e.g. Frameworks & SDKs, Databases, Languages'),
-                const SizedBox(height: 12),
-                _buildTextField(skillsController, 'Skills (comma separated)', 'e.g. Flutter, React, Vue, Angular', null, 2),
-              ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(index == null ? 'Add Skills Category' : 'Edit Skills Category'),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: 450,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildTextField(catController, 'Category Name (optional)', 'e.g. Languages, Databases, Frameworks'),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    skillsController,
+                    'Skills (comma or newline separated)',
+                    'e.g. Flutter, React\nNode.js\nSQL',
+                    (val) {
+                      if (val.contains('\n') && !isColumn) {
+                        setDialogState(() {
+                          isColumn = true;
+                        });
+                      }
+                    },
+                    4,
+                  ),
+                  const SizedBox(height: 12),
+                  CheckboxListTile(
+                    title: const Text('Display in Column Format'),
+                    subtitle: const Text('Renders skills vertically in bullet points instead of inline'),
+                    value: isColumn,
+                    contentPadding: EdgeInsets.zero,
+                    activeColor: Theme.of(context).colorScheme.primary,
+                    onChanged: (val) {
+                      setDialogState(() {
+                        isColumn = val ?? false;
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final skillList = skillsController.text
+                    .split(RegExp(r'[,\n]'))
+                    .map((s) => s.trim())
+                    .where((s) => s.isNotEmpty)
+                    .toList();
+                final skill = Skill(
+                  category: catController.text.trim(),
+                  skills: skillList,
+                  isColumn: isColumn,
+                );
+                if (index == null) {
+                  resumeProvider.addSkillCategory(skill);
+                } else {
+                  resumeProvider.updateSkillCategory(index, skill);
+                }
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              final skillList = skillsController.text
-                  .split(',')
-                  .map((s) => s.trim())
-                  .where((s) => s.isNotEmpty)
-                  .toList();
-              final skill = Skill(
-                category: catController.text.trim(),
-                skills: skillList,
-              );
-              if (index == null) {
-                resumeProvider.addSkillCategory(skill);
-              } else {
-                resumeProvider.updateSkillCategory(index, skill);
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }
@@ -783,7 +812,14 @@ class SkillsSection extends StatelessWidget {
                         color: theme.scaffoldBackgroundColor,
                         margin: const EdgeInsets.only(bottom: 8),
                         child: ListTile(
-                          title: Text(skill.category, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          title: Text(
+                            skill.category.isNotEmpty ? skill.category : 'General Skills',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: skill.category.isEmpty ? Colors.grey[600] : null,
+                              fontStyle: skill.category.isEmpty ? FontStyle.italic : null,
+                            ),
+                          ),
                           subtitle: Wrap(
                             spacing: 6,
                             runSpacing: 4,
@@ -1321,13 +1357,13 @@ Widget _buildTextField(
   String hintText, [
   Function(String)? onChanged,
   int maxLines = 1,
-  TextInputType keyboardType = TextInputType.text,
+  TextInputType? keyboardType,
 ]) {
   return TextField(
     controller: controller,
     onChanged: onChanged,
     maxLines: maxLines,
-    keyboardType: keyboardType,
+    keyboardType: keyboardType ?? (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
     decoration: InputDecoration(
       labelText: labelText,
       hintText: hintText,
